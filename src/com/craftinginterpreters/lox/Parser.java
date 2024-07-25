@@ -5,6 +5,8 @@ import java.util.List;
 import static com.craftinginterpreters.lox.TokenType.*;
 
 class Parser {
+
+    private class ParseError extends RuntimeException{}
     
     private final List<Token> tokens; 
 
@@ -12,6 +14,15 @@ class Parser {
 
     Parser(List<Token> tokens){
         this.tokens = tokens; 
+    }
+
+    Expr parse(){
+        try{
+            return expression(); 
+        }
+        catch(ParseError error){
+            return null; 
+        }
     }
 
     private Expr expression(){
@@ -98,13 +109,48 @@ class Parser {
           consume(RIGHT_PAREN, "Expect ')' after expression.");
           return new Expr.Grouping(expr);
         }
-        return new Expr.Grouping(null); 
+
+        throw error(peek(), "invalid expression"); 
     }
 
 
-    private void consume(TokenType rightParen, String string) {
+    private void consume(TokenType rightParen, String message) {
+
+        if(check(rightParen)) advance(); 
         
+
+        throw error(peek(), message); 
     }
+
+    private ParseError error(Token token, String message){
+        lox.error(token, message); // this line connects tha parser to the lox error handler. 
+        return new ParseError(); 
+    }
+
+    @SuppressWarnings("incomplete-switch")
+    private void synchronize(){
+        advance(); 
+
+        while (!isAtEnd()){
+            if(previous().type == SEMICOLON) {return; }
+        }
+
+        switch(peek().type){
+            case CLASS:
+            case FUNC:
+            case VAR:
+            case WHILE: 
+            case FOR:
+            case IF:
+            case PRINT:
+            case RETURN: 
+                return;
+        }
+
+        advance(); 
+    }
+
+
 
     private boolean match(TokenType... tokens){
         

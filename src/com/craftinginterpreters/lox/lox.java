@@ -56,7 +56,7 @@ public class lox {
     }
 
     //error handling 
-    static void error(int line, String message){
+    static void error(Token token, String message){
 
         /*
          * find a way to report the exact place of the error 
@@ -64,6 +64,15 @@ public class lox {
          * start by reporting the start and end column of the error line. 
          * keep a track of the columns while scanning and get the column number. 
         */
+
+        if (token.type == TokenType.EOF){
+            report(token.line,  "at end ", message); 
+        }else{
+            report(token.line, "where", message); 
+        }
+    }
+
+    static void error(int line, String message){
 
         report(line, "", message); 
     }
