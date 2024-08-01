@@ -10,6 +10,8 @@ import java.util.List;
 
 public class lox {
 
+    private static final Interpreter interpreter = new Interpreter(); 
+
     static boolean hadError= false;
     public static void main(String[] args) throws IOException {
         
@@ -50,9 +52,18 @@ public class lox {
 
         List<Token> tokens = scanner.scanTokens(); 
 
-        for (Token token: tokens){
-            System.out.println(token); 
-        }
+        Parser parser = new Parser(tokens); 
+        Expr expression = parser.parse(); 
+
+        if(hadError) return; 
+
+        interpreter.interpret(expression);
+    }
+
+    public static void runtimeError(RuntimeError error){
+        System.err.println("[ line " + error.token.line + "] : " + error.getMessage());
+
+        hadError = true; 
     }
 
     //error handling 
@@ -66,9 +77,9 @@ public class lox {
         */
 
         if (token.type == TokenType.EOF){
-            report(token.line,  "at end ", message); 
+            report(token.line,  " at end ", message); 
         }else{
-            report(token.line, "where", message); 
+            report(token.line, " where ", message); 
         }
     }
 

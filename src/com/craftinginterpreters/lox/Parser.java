@@ -114,9 +114,9 @@ class Parser {
     }
 
 
-    private void consume(TokenType rightParen, String message) {
+    private Token consume(TokenType type, String message) {
 
-        if(check(rightParen)) advance(); 
+        if(check(type)) return advance(); 
         
 
         throw error(peek(), message); 
@@ -152,11 +152,11 @@ class Parser {
 
 
 
-    private boolean match(TokenType... tokens){
+    private boolean match(TokenType... types){
         
-        for(TokenType token: tokens){
+        for(TokenType type: types){
 
-            if(check(token)){
+            if(check(type)){
                 advance(); 
                 return true;
             }
@@ -167,7 +167,8 @@ class Parser {
 
     private boolean check(TokenType type){
 
-        if(!isAtEnd()) return false; 
+        if(isAtEnd()) return false; 
+
         return peek().type == type; 
     }
 
@@ -183,7 +184,7 @@ class Parser {
     }
 
     private Token peek(){
-        return tokens.get(current); 
+        return this.tokens.get(current); 
     }
 
     private Token previous(){

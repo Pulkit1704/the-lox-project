@@ -1,7 +1,35 @@
 package com.craftinginterpreters.lox;
+
 import com.craftinginterpreters.lox.Expr.*;
 
 public class Interpreter implements Expr.Visitor<Object> {
+
+    void interpret(Expr expression){
+        try{
+            Object value = evaluate(expression); 
+            System.out.println(Stringify(value)); 
+        }
+        catch (RuntimeError error){
+            lox.runtimeError(error); 
+        }
+    }
+
+    private String Stringify(Object object){
+        if( object == null) return "nil"; 
+
+        if(object instanceof Double){
+            String text = object.toString(); 
+
+            if(text.endsWith(".0")){
+                text = text.substring(0, text.length() - 2); 
+            }
+
+            return text; 
+        }
+
+        return object.toString(); 
+
+    }
 
     @SuppressWarnings("incomplete-switch")
     public Object visitBinaryExpr(Binary expr) {
@@ -11,14 +39,18 @@ public class Interpreter implements Expr.Visitor<Object> {
 
         
         switch (expr.operator.type){
-            // arithematic operators 
+
             case MINUS:
+                checkNumberType(expr.operator, left, right);
+
                 return (double)left - (double)right; 
             
             case SLASH:
+                checkNumberType(expr.operator, left, right);
                 return (double)left / (double) right; 
             
             case STAR: 
+                checkNumberType(expr.operator, left, right);
                 return (double)left * (double)right; 
 
             case PLUS: 
@@ -30,21 +62,27 @@ public class Interpreter implements Expr.Visitor<Object> {
                     return (double)left + (double)right; 
                 }
 
+                throw new RuntimeError(expr.operator, "Operands must be two numbers or two Strings"); 
+
             case BANG_EQUAL: 
                 return !isEqual((double)left, (double)right); 
             case EQUAL_EQUAL: 
                 return isEqual((double)left, (double)right); 
 
             case LESS: 
+                checkNumberType(expr.operator, left, right);
                 return (double)left < (double)right; 
             
             case GREATER: 
+                checkNumberType(expr.operator, left, right);
                 return (double)left < (double)right; 
             
             case LESS_EQUAL: 
+                checkNumberType(expr.operator, left, right);
                 return (double)left <= (double)right; 
             
             case GREATER_EQUAL: 
+                checkNumberType(expr.operator, left, right);
                 return (double)left >= (double)right; 
         }
         return right;
@@ -79,6 +117,7 @@ public class Interpreter implements Expr.Visitor<Object> {
         switch (expr.opeartor.type){
 
             case MINUS:
+                checkNumberType(expr.opeartor, right); 
                 return -(double)right;
 
 
@@ -87,6 +126,21 @@ public class Interpreter implements Expr.Visitor<Object> {
             default:
                 return null; 
         } 
+    }
+
+    private void checkNumberType(Token operator, Object operand){
+
+        if(operand instanceof Double) return; 
+
+        throw new RuntimeError(operator, "Operand must be a number"); 
+
+    }
+
+    private void checkNumberType(Token operator, Object left, Object right){
+
+        if(left instanceof Double && right instanceof Double) return; 
+
+        throw new RuntimeError(operator, "operands must be numbers"); 
     }
 
     private boolean isTruthy(Object expr){
