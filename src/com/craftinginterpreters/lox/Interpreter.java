@@ -1,17 +1,25 @@
 package com.craftinginterpreters.lox;
 
+import java.util.List;
+
 import com.craftinginterpreters.lox.Expr.*;
+import com.craftinginterpreters.lox.Stmt.*;
 
-public class Interpreter implements Expr.Visitor<Object> {
+public class Interpreter implements Expr.Visitor<Object>,Stmt.Visitor<Void> {
 
-    void interpret(Expr expression){
+    void interpret(List<Stmt> statements){
         try{
-            Object value = evaluate(expression); 
-            System.out.println(Stringify(value)); 
+            for(Stmt statement: statements){
+                execute(statement); 
+            }
         }
         catch (RuntimeError error){
             lox.runtimeError(error); 
         }
+    }
+
+    private void execute(Stmt stmt){
+        stmt.accept(this); 
     }
 
     private String Stringify(Object object){
@@ -149,6 +157,19 @@ public class Interpreter implements Expr.Visitor<Object> {
         if(expr instanceof Boolean) return (boolean)expr; 
 
         return true; 
+    }
+
+    @Override
+    public Void visitExpressionStmt(Expression stmt) {
+        evaluate(stmt.expression); 
+        return null; 
+    }
+
+    @Override
+    public Void visitPrintStmt(Print stmt) {
+        Object value = evaluate(stmt.expression); 
+        System.out.println(Stringify(value));
+        return null; 
     }
 
 }

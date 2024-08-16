@@ -19,6 +19,11 @@ public class GenerateAst {
             "Literal: Object value", 
             "Unary: Token opeartor, Expr right"
         ));
+
+        defineAst(outputDir, "Stmt", Arrays.asList(
+            "Expression: Expr expression",
+            "Print: Expr expression"
+        ));
     }
 
     // defines the abstract AST class. 
