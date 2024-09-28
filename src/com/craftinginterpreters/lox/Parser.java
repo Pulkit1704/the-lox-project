@@ -21,12 +21,38 @@ class Parser {
         List<Stmt> statements = new ArrayList<Stmt>(); 
 
         while(!isAtEnd()){
-            statements.add(statement()); 
+            statements.add(Declaration()); 
         }
 
         return statements; 
     }
 
+    private Stmt Declaration(){
+        try{
+            if(match(VAR)){return VarDeclaration();}; 
+
+            return statement();
+        }catch (ParseError error){
+            synchronize();
+            return null; 
+        }
+
+    }
+
+    private Stmt VarDeclaration(){
+
+        Token name = consume(IDENTIFIER, "expect a name for a variable"); 
+
+        Expr initializer = null;
+        if(match(EQUAL)){
+            initializer = expression(); 
+        }
+
+        consume(SEMICOLON, "expect a semicolon to end the declaration"); 
+
+        return new Stmt.Var(name, initializer); 
+    }
+    
     private Stmt statement(){
 
         if(match(PRINT)) return PrintStatement(); 
@@ -55,6 +81,7 @@ class Parser {
     }
     
     private Expr equality(){
+        // we directly descend and evaluate the nested expressions first before evaluating the equality. 
         Expr expression = comparision(); 
     
         while (match(BANG_EQUAL, EQUAL_EQUAL)){
@@ -76,7 +103,6 @@ class Parser {
             
             expression = new Expr.Binary(expression, operator, right_term); 
         }
-
         return expression; 
     }
 
@@ -135,6 +161,10 @@ class Parser {
           return new Expr.Grouping(expr);
         }
 
+        if(match(IDENTIFIER)){
+            return new Expr.Var(previous()); 
+        }
+
         throw error(peek(), "invalid expression"); 
     }
 
@@ -152,7 +182,6 @@ class Parser {
         return new ParseError(); 
     }
 
-    @SuppressWarnings("incomplete-switch")
     private void synchronize(){
         advance(); 
 

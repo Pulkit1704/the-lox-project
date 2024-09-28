@@ -5,7 +5,9 @@ import java.util.List;
 import com.craftinginterpreters.lox.Expr.*;
 import com.craftinginterpreters.lox.Stmt.*;
 
-public class Interpreter implements Expr.Visitor<Object>,Stmt.Visitor<Void> {
+public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
+
+    private Environment environment = new Environment(); 
 
     void interpret(List<Stmt> statements){
         try{
@@ -39,7 +41,6 @@ public class Interpreter implements Expr.Visitor<Object>,Stmt.Visitor<Void> {
 
     }
 
-    @SuppressWarnings("incomplete-switch")
     public Object visitBinaryExpr(Binary expr) {
 
         Object left = evaluate(expr.left); 
@@ -170,6 +171,27 @@ public class Interpreter implements Expr.Visitor<Object>,Stmt.Visitor<Void> {
         Object value = evaluate(stmt.expression); 
         System.out.println(Stringify(value));
         return null; 
+    }
+
+    @Override
+    public Void visitVarStmt(Stmt.Var stmt) {
+
+        Object value = null; 
+
+        if(stmt.Initializer != null){
+            value = evaluate(stmt.Initializer); 
+        }
+
+        environment.define(stmt.name.lexeme, value);
+
+        return null;
+    }
+
+    @Override
+    public Object visitVarExpr(Expr.Var expr) {
+
+        return environment.get(expr.name);
+        
     }
 
 }
