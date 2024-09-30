@@ -18,4 +18,16 @@ public class Environment {
 
         throw new RuntimeError(name, "Undefined variable"); 
     }
+
+    public void assign(Token name, Object expression){
+
+        if(values.containsKey(name.lexeme)){
+            values.put(name.lexeme, expression); 
+            return; 
+        }
+
+        // we can decide here if we want to create a new variable if the one provided does not exist yet. 
+
+        throw new RuntimeError( name, "Undefined variable " + name.lexeme + "."); 
+    }
 }

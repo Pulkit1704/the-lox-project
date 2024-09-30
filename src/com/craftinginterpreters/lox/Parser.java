@@ -77,7 +77,28 @@ class Parser {
     }
 
     private Expr expression(){
-        return equality(); 
+        return assignment(); 
+    }
+
+    private Expr assignment(){
+        Expr expression = equality(); 
+
+        if(match(EQUAL)){
+            Token equals = previous(); 
+            Expr value = assignment(); 
+
+            if(expression instanceof Expr.Var){
+                Token name = ((Expr.Var) expression).name; 
+
+                return new Expr.Assignment(name, value); 
+
+            }
+
+            error(equals, "invalid assignment target"); 
+
+        }
+        
+        return expression;
     }
     
     private Expr equality(){
@@ -203,8 +224,6 @@ class Parser {
 
         advance(); 
     }
-
-
 
     private boolean match(TokenType... types){
         
