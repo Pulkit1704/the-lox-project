@@ -57,7 +57,23 @@ class Parser {
 
         if(match(PRINT)) return PrintStatement(); 
 
+        if(match(LEFT_BRACE)){return new Stmt.Block(block());}
+
         return ExpressionStatement(); 
+    }
+
+    private List<Stmt> block(){
+
+        List<Stmt> statements = new ArrayList<Stmt>(); 
+
+        while (!check(RIGHT_BRACE) && !isAtEnd()){
+            statements.add(Declaration()); 
+        }
+
+        consume(RIGHT_BRACE, "Expected } at the end of block"); 
+
+        return statements; 
+
     }
 
     private Stmt PrintStatement(){
