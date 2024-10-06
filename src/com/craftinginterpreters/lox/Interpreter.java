@@ -84,7 +84,7 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
             
             case GREATER: 
                 checkNumberType(expr.operator, left, right);
-                return (double)left < (double)right; 
+                return (double)left > (double)right;
             
             case LESS_EQUAL: 
                 checkNumberType(expr.operator, left, right);
@@ -228,6 +228,18 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
             this.environment = previous; 
         }
     
+    }
+
+    @Override
+    public Void visitIfStmt(If stmt) {
+        
+        if(isTruthy(evaluate(stmt.condition))){
+            execute(stmt.ThenStatement);
+        }else if(stmt.ElseStatement != null){
+            execute(stmt.ElseStatement);
+        }
+
+        return null; 
     }
 
 }

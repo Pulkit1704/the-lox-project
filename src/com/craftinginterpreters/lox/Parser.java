@@ -57,9 +57,39 @@ class Parser {
 
         if(match(PRINT)) return PrintStatement(); 
 
+        if(match(IF)) return IfStatement(); 
+
         if(match(LEFT_BRACE)){return new Stmt.Block(block());}
 
         return ExpressionStatement(); 
+    }
+
+    private Stmt IfStatement(){
+
+        // we are not supporting single line if statements. 
+
+        consume(LEFT_PAREN, "expect ( before condition"); 
+        Expr condition = expression(); 
+        consume(RIGHT_PAREN, "expect ) after condition"); 
+
+        consume(LEFT_BRACE, "expected { to start the if execution block");  
+
+        Stmt thenStatement = statement(); 
+
+        consume(RIGHT_BRACE, "unterminated if execution block"); 
+
+        Stmt elseStatement = null; 
+
+        if(match(ELSE)){
+            consume(LEFT_BRACE, "expected { to start the else execution block"); 
+
+            elseStatement = statement(); 
+
+            consume(RIGHT_BRACE, "unterminated else execution block"); 
+        }
+
+
+        return new Stmt.If(condition, thenStatement, elseStatement); 
     }
 
     private List<Stmt> block(){
