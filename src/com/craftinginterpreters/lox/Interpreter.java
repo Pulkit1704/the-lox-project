@@ -123,10 +123,10 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     public Object visitUnaryExpr(Unary expr) {
         Object right = expr.right; 
         
-        switch (expr.opeartor.type){
+        switch (expr.operator.type){
 
             case MINUS:
-                checkNumberType(expr.opeartor, right); 
+                checkNumberType(expr.operator, right);
                 return -(double)right;
 
 
@@ -206,6 +206,19 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     }
 
     @Override
+    public Object visitlogicalExpr(logical expr) {
+        Object left = evaluate(expr.left);
+
+        if(expr.operator.type == TokenType.OR){
+            if(isTruthy(left)) return left;
+        }else{
+            if(!isTruthy(left)) return left;
+        }
+
+        return evaluate(expr.right);
+    }
+
+    @Override
     public Void visitBlockStmt(Block block) {
 
         executeBlock(block, new Environment(environment)); 
@@ -240,6 +253,16 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
         }
 
         return null; 
+    }
+
+    @Override
+    public Void visitWhileStmt(While stmt) {
+
+        while(isTruthy(evaluate(stmt.condition))){
+            execute(stmt.WhileStatement);
+        }
+
+        return null;
     }
 
 }

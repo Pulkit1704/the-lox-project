@@ -16,16 +16,18 @@ public class GenerateAst {
         defineAst(outputDir, "Expr", Arrays.asList(
             "Binary: Expr left, Token operator, Expr right", 
             "Assignment: Token name, Expr value",
+            "logical: Expr left, Token operator, Expr right",
             "Grouping: Expr expression",
             "Literal: Object value", 
-            "Unary: Token opeartor, Expr right",
+            "Unary: Token operator, Expr right",
             "Var: Token name"
         ));
 
         defineAst(outputDir, "Stmt", Arrays.asList(
             "Block: List<Stmt> statements",
             "Expression: Expr expression",
-            "If: Expr condition, Stmt ThenStatement, Stmt ElseStatement", 
+            "If: Expr condition, Stmt ThenStatement, Stmt ElseStatement",
+            "While: Expr condition, Stmt WhileStatement",
             "Print: Expr expression",
             "Var: Token name, Expr Initializer"
         ));
@@ -96,5 +98,6 @@ public class GenerateAst {
         }
 
         writer.println("\t}");
+        writer.println();
     }
 }

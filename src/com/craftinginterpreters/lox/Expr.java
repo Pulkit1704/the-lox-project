@@ -6,6 +6,7 @@ abstract class Expr {
 	interface Visitor<R> {
 		R visitBinaryExpr(Binary expr);
 		R visitAssignmentExpr(Assignment expr);
+		R visitlogicalExpr(logical expr);
 		R visitGroupingExpr(Grouping expr);
 		R visitLiteralExpr(Literal expr);
 		R visitUnaryExpr(Unary expr);
@@ -27,6 +28,7 @@ abstract class Expr {
 		final  Token operator;
 		final  Expr right;
 	}
+
 	static class Assignment extends Expr {
 		Assignment(Token name, Expr value) {
 			this.name = name;
@@ -41,6 +43,24 @@ abstract class Expr {
 		final Token name;
 		final  Expr value;
 	}
+
+	static class logical extends Expr {
+		logical(Expr left, Token operator, Expr right) {
+			this.left = left;
+			this.operator = operator;
+			this.right = right;
+		}
+
+		@Override
+		<R> R accept(Visitor<R> visitor) {
+			return visitor.visitlogicalExpr(this);
+		}
+
+		final Expr left;
+		final  Token operator;
+		final  Expr right;
+	}
+
 	static class Grouping extends Expr {
 		Grouping(Expr expression) {
 			this.expression = expression;
@@ -53,6 +73,7 @@ abstract class Expr {
 
 		final Expr expression;
 	}
+
 	static class Literal extends Expr {
 		Literal(Object value) {
 			this.value = value;
@@ -65,9 +86,10 @@ abstract class Expr {
 
 		final Object value;
 	}
+
 	static class Unary extends Expr {
-		Unary(Token opeartor, Expr right) {
-			this.opeartor = opeartor;
+		Unary(Token operator, Expr right) {
+			this.operator = operator;
 			this.right = right;
 		}
 
@@ -76,9 +98,10 @@ abstract class Expr {
 			return visitor.visitUnaryExpr(this);
 		}
 
-		final Token opeartor;
+		final Token operator;
 		final  Expr right;
 	}
+
 	static class Var extends Expr {
 		Var(Token name) {
 			this.name = name;
@@ -91,6 +114,7 @@ abstract class Expr {
 
 		final Token name;
 	}
+
 
 	abstract <R> R accept(Visitor <R> visitor);
 }

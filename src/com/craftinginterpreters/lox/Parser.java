@@ -57,11 +57,24 @@ class Parser {
 
         if(match(PRINT)) return PrintStatement(); 
 
-        if(match(IF)) return IfStatement(); 
+        if(match(IF)) return IfStatement();
+
+        if(match(WHILE)) return WhileStatement();
 
         if(match(LEFT_BRACE)){return new Stmt.Block(block());}
 
         return ExpressionStatement(); 
+    }
+
+    private Stmt WhileStatement(){
+
+        consume(LEFT_PAREN, "expect ( before while condition");
+        Expr condition = expression();
+        consume(RIGHT_PAREN, "expect ) after while condition");
+
+        Stmt WhileStatement = statement();
+
+        return new Stmt.While(condition, WhileStatement);
     }
 
     private Stmt IfStatement(){
@@ -127,7 +140,7 @@ class Parser {
     }
 
     private Expr assignment(){
-        Expr expression = equality(); 
+        Expr expression = or();
 
         if(match(EQUAL)){
             Token equals = previous(); 
@@ -145,6 +158,31 @@ class Parser {
         }
         
         return expression;
+    }
+
+    private Expr or(){
+        Expr left = and();
+
+        if(match(OR)){
+            Token operator = previous();
+            Expr right = and();
+            left = new Expr.logical(left, operator, right);
+        }
+
+        return left;
+    }
+
+    private Expr and(){
+        Expr left = equality();
+
+        if(match(AND)){
+            Token operator = previous();
+            Expr right = equality();
+
+            left = new Expr.logical(left, operator, right);
+        }
+
+        return left;
     }
     
     private Expr equality(){
