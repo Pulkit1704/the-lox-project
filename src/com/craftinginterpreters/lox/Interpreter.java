@@ -37,8 +37,7 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
             return text; 
         }
 
-        return object.toString(); 
-
+        return object.toString();
     }
 
     public Object visitBinaryExpr(Binary expr) {
@@ -66,30 +65,24 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
                 if (left instanceof String && right instanceof String){
                     return (String)left + (String)right; 
                 }
-
                 if (left instanceof Double && right instanceof Double){
                     return (double)left + (double)right; 
                 }
-
                 throw new RuntimeError(expr.operator, "Operands must be two numbers or two Strings"); 
 
             case BANG_EQUAL: 
                 return !isEqual((double)left, (double)right); 
             case EQUAL_EQUAL: 
-                return isEqual((double)left, (double)right); 
-
+                return isEqual((double)left, (double)right);
             case LESS: 
                 checkNumberType(expr.operator, left, right);
-                return (double)left < (double)right; 
-            
+                return (double)left < (double)right;
             case GREATER: 
                 checkNumberType(expr.operator, left, right);
                 return (double)left > (double)right;
-            
             case LESS_EQUAL: 
                 checkNumberType(expr.operator, left, right);
-                return (double)left <= (double)right; 
-            
+                return (double)left <= (double)right;
             case GREATER_EQUAL: 
                 checkNumberType(expr.operator, left, right);
                 return (double)left >= (double)right; 
@@ -111,7 +104,7 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     }
 
     private Object evaluate(Expr expr){
-        return expr.accept(this);   
+        return expr.accept(this);
     }
 
     @Override
@@ -121,20 +114,16 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
 
     @Override
     public Object visitUnaryExpr(Unary expr) {
-        Object right = expr.right; 
-        
-        switch (expr.operator.type){
+        Object right = evaluate(expr.right);
 
-            case MINUS:
+        return switch (expr.operator.type) {
+            case MINUS -> {
                 checkNumberType(expr.operator, right);
-                return -(double)right;
-
-
-            case BANG: 
-                return isTruthy((double)right); 
-            default:
-                return null; 
-        } 
+                yield -(double) right;
+            }
+            case BANG -> !isTruthy(right);
+            default -> null;
+        };
     }
 
     private void checkNumberType(Token operator, Object operand){
@@ -155,7 +144,7 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     private boolean isTruthy(Object expr){
         if(expr == null) return false; 
         
-        if(expr instanceof Boolean) return (boolean)expr; 
+        if(expr instanceof Boolean) return (boolean)expr;
 
         return true; 
     }
@@ -214,7 +203,6 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
         }else{
             if(!isTruthy(left)) return left;
         }
-
         return evaluate(expr.right);
     }
 
@@ -240,7 +228,6 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
         }finally{
             this.environment = previous; 
         }
-    
     }
 
     @Override
@@ -251,7 +238,6 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
         }else if(stmt.ElseStatement != null){
             execute(stmt.ElseStatement);
         }
-
         return null; 
     }
 
@@ -264,5 +250,4 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
 
         return null;
     }
-
 }
