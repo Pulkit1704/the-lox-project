@@ -1,13 +1,32 @@
 package com.craftinginterpreters.lox;
 
 import java.util.List;
+import java.util.ArrayList;
 
 import com.craftinginterpreters.lox.Expr.*;
 import com.craftinginterpreters.lox.Stmt.*;
 
 public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
 
-    private Environment environment = new Environment(); 
+    final Environment globals = new Environment();
+    private Environment environment = globals;
+
+    Interpreter(){
+        globals.define("clock", new LoxCallable(){
+            @Override
+            public int aerity() {
+                return 0;
+            }
+
+            @Override
+            public Object call(Interpreter interpreter, List<Object> arguments) {
+                return System.currentTimeMillis()/ 1000.0;
+            }
+
+            public String toString(){return "<native fn>"; }
+        });
+
+    }
 
     void interpret(List<Stmt> statements){
         try{
@@ -126,6 +145,31 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
         };
     }
 
+    @Override
+    public Object visitCallExpr(Expr.Call expr) {
+        Object callee = evaluate(expr.callee);
+
+        List<Object> arguments = new ArrayList<>();
+
+        for(Expr argument: expr.arguments){
+            arguments.add(evaluate(argument));
+        }
+
+        if(!(callee instanceof LoxCallable)){
+            throw new RuntimeError(expr.paren,
+                    "the expression is not callable");
+        }
+
+        LoxCallable function = (LoxCallable)callee;
+
+        if(arguments.size() != function.aerity()){
+            throw new RuntimeError(expr.paren, "Expected" +
+                    function.aerity() + " arguments but got" +
+                    arguments.size() + "arguments instead");
+        }
+        return function.call(this, arguments);
+    }
+
     private void checkNumberType(Token operator, Object operand){
 
         if(operand instanceof Double) return; 
@@ -156,6 +200,13 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     }
 
     @Override
+    public Void visitFuncStmt(Func stmt) {
+        LoxFunction function = new LoxFunction(stmt);
+        environment.define(stmt.name.lexeme, function);
+        return null;
+    }
+
+    @Override
     public Void visitPrintStmt(Print stmt) {
         Object value = evaluate(stmt.expression); 
         System.out.println(Stringify(value));
@@ -174,6 +225,15 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
         environment.define(stmt.name.lexeme, value);
 
         return null;
+    }
+
+    @Override
+    public Void visitReturnStmt(Stmt.Return stmt) {
+        Object value = null;
+
+        if(stmt.value != null){value = evaluate(stmt.value);}
+
+        throw new Return(value);
     }
 
     @Override
@@ -209,20 +269,20 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     @Override
     public Void visitBlockStmt(Block block) {
 
-        executeBlock(block, new Environment(environment)); 
+        executeBlock(block.statements, new Environment(environment));
 
         return null; 
         
     }
 
-    private void executeBlock(Block block, Environment environment){
+    void executeBlock(List<Stmt> statements, Environment environment){
 
         Environment previous = this.environment; 
 
         try{
             this.environment = environment; 
 
-            for(Stmt statement: block.statements){
+            for(Stmt statement: statements){
                 execute(statement);
             }
         }finally{
