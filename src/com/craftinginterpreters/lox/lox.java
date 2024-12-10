@@ -55,7 +55,12 @@ public class lox {
         Parser parser = new Parser(tokens); 
         List<Stmt> statements = parser.parse();  
 
-        if(hadError) return; 
+        if(hadError) return;
+
+        Resolver resolver = new Resolver(interpreter);
+        resolver.resolve(statements);
+
+        if(hadError) return;
 
         interpreter.interpret(statements);
     }
@@ -68,14 +73,6 @@ public class lox {
 
     //error handling 
     static void error(Token token, String message){
-
-        /*
-         * find a way to report the exact place of the error 
-         * possible way: 
-         * start by reporting the start and end column of the error line. 
-         * keep a track of the columns while scanning and get the column number. 
-        */
-
         if (token.type == TokenType.EOF){
             report(token.line,  " at end ", message); 
         }else{
