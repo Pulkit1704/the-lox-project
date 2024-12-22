@@ -57,6 +57,8 @@ class Parser {
 
         if(match(PRINT)) return PrintStatement();
 
+        if(match(CLASS)) return ClasStatement();
+
         if(match(FUNC)) return Function("function");
 
         if(match(RETURN)) return Return();
@@ -72,11 +74,26 @@ class Parser {
         return ExpressionStatement(); 
     }
 
+    private Stmt ClasStatement(){
+        Token name = consume(IDENTIFIER, "Expect class name");
+        consume(LEFT_BRACE, "Expect left paren after class name");
+
+        List<Stmt.Func> methods = new ArrayList<>();
+
+        while(!check(RIGHT_BRACE) && !isAtEnd()){
+            methods.add(Function("method"));
+        }
+
+        consume(RIGHT_BRACE, "Expect closing right parenthesis");
+
+        return new Stmt.Class(name, methods);
+    }
+
     private Stmt Return(){
         Token keyword = previous();
 
         Expr value = null;
-        if(!match(SEMICOLON)){
+        if(!check(SEMICOLON)){
             value = expression();
         }
 
@@ -240,6 +257,9 @@ class Parser {
 
                 return new Expr.Assignment(name, value); 
 
+            }else if(expression instanceof Expr.Get){
+                Expr.Get get = (Expr.Get)expression;
+                return new Expr.Set(get.object, get.name, value);
             }
 
             throw error(equals, "invalid assignment target");
@@ -341,16 +361,19 @@ class Parser {
     }
 
     private Expr call(){
-        Expr name = primary();
+        Expr expr = primary();
 
         while(true){
             if(match(LEFT_PAREN)){
-                name = finishcall(name);
+                expr = finishcall(expr);
+            }else if (match(DOT)){
+                Token name = consume(IDENTIFIER, "expect property name after '.'");
+                expr = new Expr.Get(expr, name);
             }else{
                 break;
             }
         }
-        return name;
+        return expr;
     }
 
     private Expr finishcall(Expr callee){
@@ -386,6 +409,8 @@ class Parser {
           consume(RIGHT_PAREN, "Expect ')' after expression.");
           return new Expr.Grouping(expr);
         }
+
+        if (match(THIS)) return new Expr.This(previous());
 
         if(match(IDENTIFIER)){
             return new Expr.Var(previous()); 

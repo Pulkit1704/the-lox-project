@@ -52,6 +52,7 @@ public class Scanner {
         keywords.put("true", TRUE); 
         keywords.put("var", VAR); 
         keywords.put("while", WHILE);
+        keywords.put("this", THIS);
     }
 
     private void scanToken(){

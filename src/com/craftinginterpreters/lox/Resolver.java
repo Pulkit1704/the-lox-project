@@ -14,8 +14,17 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
 
     private enum FunctionType{
         NONE,
-        FUNCTION
+        FUNCTION,
+        INITIALIZER,
+        METHOD
     }
+
+    private enum ClassType{
+        NONE,
+        CLASS
+    }
+
+    private ClassType currentClass = ClassType.NONE;
 
     Resolver(Interpreter interpreter){
         this.interpreter = interpreter;
@@ -70,6 +79,31 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
     }
 
     @Override
+    public Void visitSetExpr(Expr.Set expr) {
+        resolve(expr.value);
+        resolve(expr.object);
+        return null;
+    }
+
+    @Override
+    public Void visitThisExpr(Expr.This expr) {
+        if (currentClass == ClassType.NONE){
+            lox.error(expr.keyword,
+                    "Can't use 'this' outside of a class");
+            return null;
+        }
+
+        ResolveLocal(expr, expr.keyword);
+        return null;
+    }
+
+    @Override
+    public Void visitGetExpr(Expr.Get expr) {
+        resolve(expr.object);
+        return null;
+    }
+
+    @Override
     public Void visitVarExpr(Expr.Var expr) {
 
         if(!scopes.isEmpty() && scopes.peek().get(expr.name.lexeme) == Boolean.FALSE){
@@ -92,6 +126,32 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
     @Override
     public Void visitExpressionStmt(Stmt.Expression stmt) {
         resolve(stmt.expression);
+        return null;
+    }
+
+    @Override
+    public Void visitClassStmt(Stmt.Class stmt) {
+
+        ClassType enclosingClass = currentClass;
+        currentClass = ClassType.CLASS;
+
+        declare(stmt.name);
+        define(stmt.name);
+
+        beginScope();
+        scopes.peek().put("this", true);
+
+        for(Stmt.Func method: stmt.methods){
+            FunctionType declaration = FunctionType.METHOD;
+            if (method.name.lexeme.equals("init")){
+                declaration = FunctionType.INITIALIZER;
+            }
+            resolveFunction(method, declaration);
+        }
+
+        endScope();
+        currentClass = enclosingClass;
+
         return null;
     }
 
@@ -146,6 +206,11 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
         }
 
         if(stmt.value != null){
+            if(currentFunction == FunctionType.INITIALIZER){
+                lox.error(stmt.keyword,
+                        "Can't return a value from an initializer.");
+            }
+
             resolve(stmt.value);
         }
         return null;

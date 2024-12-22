@@ -28,7 +28,6 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
 
             public String toString(){return "<native fn>"; }
         });
-
     }
 
     void interpret(List<Stmt> statements){
@@ -59,18 +58,15 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
             if(text.endsWith(".0")){
                 text = text.substring(0, text.length() - 2); 
             }
-
             return text; 
         }
-
         return object.toString();
     }
 
     public Object visitBinaryExpr(Binary expr) {
 
         Object left = evaluate(expr.left); 
-        Object right = evaluate(expr.right); 
-
+        Object right = evaluate(expr.right);
         
         switch (expr.operator.type){
 
@@ -114,7 +110,6 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
                 return (double)left >= (double)right; 
         }
         return right;
-        
     }
 
     private boolean isEqual(Object left, Object right){
@@ -177,12 +172,39 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
         return function.call(this, arguments);
     }
 
+    @Override
+    public Object visitSetExpr(Set expr) {
+        Object object = evaluate(expr.object);
+
+        if(!(object instanceof LoxInstance)){
+            throw new RuntimeError(expr.name, "Only instances have fields");
+        }
+
+        Object value = evaluate(expr.value);
+        ((LoxInstance)object).set(expr.name, value);
+        return null;
+    }
+
+    @Override
+    public Object visitThisExpr(This expr) {
+        return lookUpVariable(expr.keyword, expr);
+    }
+
+    @Override
+    public Object visitGetExpr(Get expr) {
+        Object object = evaluate(expr.object);
+        if(object instanceof LoxInstance){
+            return ((LoxInstance) object).get(expr.name);
+        }
+
+        throw new RuntimeError(expr.name, "Only instances have properties");
+    }
+
     private void checkNumberType(Token operator, Object operand){
 
         if(operand instanceof Double) return; 
 
-        throw new RuntimeError(operator, "Operand must be a number"); 
-
+        throw new RuntimeError(operator, "Operand must be a number");
     }
 
     private void checkNumberType(Token operator, Object left, Object right){
@@ -207,8 +229,24 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     }
 
     @Override
+    public Void visitClassStmt(Stmt.Class stmt) {
+        environment.define(stmt.name.lexeme, null);
+
+        Map<String, LoxFunction> methods = new HashMap<>();
+        for (Stmt.Func method: stmt.methods){
+            LoxFunction function = new LoxFunction(method, environment,
+                    method.name.lexeme.equals("init"));
+            methods.put(method.name.lexeme, function);
+        }
+
+        LoxClass klass = new LoxClass(stmt.name.lexeme, methods);
+        environment.assign(stmt.name, klass);
+        return null;
+    }
+
+    @Override
     public Void visitFuncStmt(Func stmt) {
-        LoxFunction function = new LoxFunction(stmt, environment);
+        LoxFunction function = new LoxFunction(stmt, environment, false);
         environment.define(stmt.name.lexeme, function);
         return null;
     }
