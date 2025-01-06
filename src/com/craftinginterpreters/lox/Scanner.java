@@ -197,7 +197,6 @@ public class Scanner {
     }
 
     private char advance(){
-        // * this is doing 2 things, returning the character and increamenting the currrent value. 
         return source.charAt(current++);
     }
 

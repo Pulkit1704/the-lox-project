@@ -76,6 +76,13 @@ class Parser {
 
     private Stmt ClasStatement(){
         Token name = consume(IDENTIFIER, "Expect class name");
+        Expr.Var superclass = null;
+
+        if(match(LESS)){
+            consume(IDENTIFIER, "expect super class name after <");
+            superclass = new Expr.Var(previous());
+        }
+
         consume(LEFT_BRACE, "Expect left paren after class name");
 
         List<Stmt.Func> methods = new ArrayList<>();
@@ -86,7 +93,7 @@ class Parser {
 
         consume(RIGHT_BRACE, "Expect closing right parenthesis");
 
-        return new Stmt.Class(name, methods);
+        return new Stmt.Class(name, superclass, methods);
     }
 
     private Stmt Return(){
@@ -402,6 +409,13 @@ class Parser {
     
         if (match(NUMBER, STRING)) {
           return new Expr.Literal(previous().literal);
+        }
+
+        if(match(SUPER)){
+            Token keyword = previous();
+            consume(DOT, "expect '.' after super keyword");
+            Token method = consume(IDENTIFIER, "expect method name after '.'");
+            return new Expr.Super(keyword, method);
         }
     
         if (match(LEFT_PAREN)) {
