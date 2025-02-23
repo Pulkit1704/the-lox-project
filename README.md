@@ -1,2 +1,2 @@
 # the-lox-project
-A programming language interpreter written in java
+Implementation of the lox programming language from the book [crafting interpreters](http://craftinginterpreters.com/) in java
